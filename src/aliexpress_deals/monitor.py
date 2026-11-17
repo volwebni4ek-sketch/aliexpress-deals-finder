@@ -47,6 +47,18 @@ class PriceMonitor:
 
                 CREATE INDEX IF NOT EXISTS idx_snapshots_product_time
                 ON price_snapshots (product_id, recorded_at DESC);
+
+                CREATE TABLE IF NOT EXISTS telegram_promos (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    channel TEXT NOT NULL,
+                    code TEXT NOT NULL,
+                    description TEXT NOT NULL,
+                    discount_amount REAL,
+                    min_spend REAL,
+                    post_text TEXT NOT NULL,
+                    recorded_at TEXT NOT NULL,
+                    UNIQUE(channel, code)
+                );
                 """
             )
 
@@ -171,5 +183,52 @@ class PriceMonitor:
                 LIMIT ?
                 """,
                 (product_id, limit),
+            ).fetchall()
+            return [dict(row) for row in rows]
+
+    def save_telegram_promos(self, posts: list) -> int:
+        """Persist extracted Telegram promo codes into SQLite and return count saved."""
+        now = datetime.now(timezone.utc).isoformat()
+        saved = 0
+        with self._connect() as conn:
+            for post in posts:
+                for coupon in post.coupons:
+                    code = coupon.code or coupon.description[:32]
+                    conn.execute(
+                        """
+                        INSERT INTO telegram_promos (
+                            channel, code, description, discount_amount,
+                            min_spend, post_text, recorded_at
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                        ON CONFLICT(channel, code) DO UPDATE SET
+                            description = excluded.description,
+                            discount_amount = excluded.discount_amount,
+                            min_spend = excluded.min_spend,
+                            post_text = excluded.post_text,
+                            recorded_at = excluded.recorded_at
+                        """,
+                        (
+                            post.channel,
+                            code,
+                            coupon.description,
+                            coupon.discount_amount,
+                            coupon.min_spend,
+                            post.text,
+                            now,
+                        ),
+                    )
+                    saved += 1
+        return saved
+
+    def list_telegram_promos(self, limit: int = 50) -> list[dict]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT channel, code, description, discount_amount, min_spend, post_text, recorded_at
+                FROM telegram_promos
+                ORDER BY id DESC
+                LIMIT ?
+                """,
+                (limit,),
             ).fetchall()
             return [dict(row) for row in rows]

@@ -59,3 +59,38 @@ def export_deals_to_json(deals: list[ProductDeal], path: str | Path) -> Path:
     payload = [d.model_dump(mode="json") for d in deals]
     target.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
     return target
+
+
+def export_arbitrage_to_csv(rows: list[dict], path: str | Path) -> Path:
+    target = Path(path)
+    fieldnames = [
+        "preset_slug",
+        "keyword",
+        "route_country",
+        "product_id",
+        "title",
+        "sale_price_usd",
+        "applied_coupon_code",
+        "coupon_discount_usd",
+        "ali_shipping_usd",
+        "forwarder_shipping_usd",
+        "customs_tax_usd",
+        "final_landed_cost_usd",
+        "rating",
+        "orders_count",
+        "deal_score",
+        "notes",
+        "url",
+    ]
+    with target.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({k: row.get(k, "") for k in fieldnames})
+    return target
+
+
+def export_arbitrage_to_json(rows: list[dict], path: str | Path) -> Path:
+    target = Path(path)
+    target.write_text(json.dumps(rows, indent=2, ensure_ascii=False), encoding="utf-8")
+    return target
