@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import re
 from typing import Any, Optional
 
@@ -55,24 +56,38 @@ def extract_init_data_json(html: str) -> dict[str, Any]:
 
     markers = [
         "_init_data_=",
+        "_init_data_ =",
         "window._d_c_.DCData=",
         "window.runParams=",
     ]
     decoder = json.JSONDecoder()
 
     for marker in markers:
-        idx = html.find(marker)
-        if idx == -1:
-            continue
-        start = html.find("{", idx + len(marker))
-        if start == -1:
-            continue
-        try:
-            obj, _ = decoder.raw_decode(html, start)
-            if isinstance(obj, dict):
-                return obj
-        except json.JSONDecodeError:
-            continue
+        pos = 0
+        while True:
+            idx = html.find(marker, pos)
+            if idx == -1:
+                break
+            pos = idx + len(marker)
+            start = html.find("{", pos)
+            if start == -1:
+                continue
+            try:
+                obj, _ = decoder.raw_decode(html, start)
+                if isinstance(obj, dict):
+                    return obj
+            except json.JSONDecodeError:
+                # Live AliExpress SSR wraps JSON as: _init_data_= { data: {"hierarchy": ...} }
+                data_match = re.match(r"\{\s*data\s*:\s*\{", html[start : start + 40])
+                if data_match:
+                    inner_start = html.find("{", start + 1)
+                    try:
+                        obj, _ = decoder.raw_decode(html, inner_start)
+                        if isinstance(obj, dict):
+                            return {"data": obj}
+                    except json.JSONDecodeError:
+                        pass
+                continue
 
     raise ProviderError("Could not locate embedded product JSON in AliExpress search response.")
 
@@ -240,6 +255,11 @@ class DirectWebSearchProvider:
         cookies = {
             "aep_usuc_f": f"site=glo&c_tp={query.currency}&region={query.ship_to_country}&b_locale=en_US",
         }
+
+        for var in ("NO_PROXY", "no_proxy"):
+            val = os.environ.get(var, "")
+            if "::1" in val:
+                os.environ[var] = ",".join(p.strip() for p in val.split(",") if "::1" not in p)
 
         last_err: Optional[Exception] = None
         async with httpx.AsyncClient(
