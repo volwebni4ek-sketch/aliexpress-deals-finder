@@ -1,0 +1,34 @@
+[project]
+name = "aliexpress-deals-finder"
+version = "0.1.0"
+description = "AliExpress deals finder, price & shipping analyzer, and promo/coupon monitor"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.27.0",
+    "pydantic>=2.7.0",
+    "pydantic-settings>=2.3.0",
+    "fastapi>=0.115.0",
+    "uvicorn>=0.30.0",
+    "rich>=13.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2.0",
+    "pytest-asyncio>=0.23.0",
+]
+
+[project.scripts]
+aliexpress-deals = "aliexpress_deals.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/aliexpress_deals"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
