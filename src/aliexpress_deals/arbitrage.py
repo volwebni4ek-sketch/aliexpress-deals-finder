@@ -25,6 +25,12 @@ DEFAULT_FORWARDERS: dict[str, ForwarderRate] = {
     "PL": ForwarderRate(country_code="PL", provider_name="Meest Poland / NP Shopping PL", base_fee_usd=2.5, per_kg_usd=3.0),
     "DE": ForwarderRate(country_code="DE", provider_name="Meest Germany / NP Shopping DE", base_fee_usd=3.5, per_kg_usd=3.8),
     "CZ": ForwarderRate(country_code="CZ", provider_name="NP Shopping CZ", base_fee_usd=3.0, per_kg_usd=3.5),
+    "FR": ForwarderRate(country_code="FR", provider_name="NP Shopping FR / Meest FR", base_fee_usd=4.0, per_kg_usd=4.5),
+    "NL": ForwarderRate(country_code="NL", provider_name="Meest / EU Forwarder NL", base_fee_usd=4.0, per_kg_usd=4.5),
+    "ES": ForwarderRate(country_code="ES", provider_name="NP Shopping ES / Meest ES", base_fee_usd=4.0, per_kg_usd=4.5),
+    "IT": ForwarderRate(country_code="IT", provider_name="NP Shopping IT / Meest IT", base_fee_usd=4.0, per_kg_usd=4.5),
+    "GB": ForwarderRate(country_code="GB", provider_name="NP Shopping UK / Meest UK", base_fee_usd=4.5, per_kg_usd=5.0),
+    "US": ForwarderRate(country_code="US", provider_name="NP Shopping US / Meest US", base_fee_usd=5.0, per_kg_usd=6.5),
 }
 
 
